@@ -14,7 +14,6 @@ body {
 }
 
 div {
-	display: inline-block;
 
 }
 
@@ -38,12 +37,14 @@ div {
 	padding: 5px;
 	vertical-align: top;
 	background-color: #203354;
+	display: inline-block;
 }
 
-#conversation {
+#conversation { 
 	width: calc(80% - 15px);
 	margin: none;
 	height: 100%;
+	display: inline-block;
 }
 
 .hint {
@@ -86,7 +87,7 @@ div {
 }
 
 #message-input {
-	
+
 }
 
 .message {
@@ -95,8 +96,12 @@ div {
 	margin-top: 10px;
 }
 
+.unsent {
+	color: #777777;
+}
+
 .thread {	
-	/*display: block;*/
+	display: block;
 	padding: 3px;
 	width: calc(100% - 6px);
 	background-color: #203354;
@@ -119,12 +124,6 @@ div {
 	height: 22px;
 }
 
-.last-message {
-	float: left;
-	display: inline;
-	overflow-y: hidden;
-	height: 20px;
-}
 
 .self, .self.timestamp, .self.sender {
 	text-align: right;
@@ -134,6 +133,14 @@ div {
 	display: block;
 	color: #777777;
 	font-size: 13px;
+}
+
+.last-message {
+	width: 100%;
+	float: left;
+	display: inline;
+	overflow-y: hidden;
+	height: 20px;
 }
 
 .divider {

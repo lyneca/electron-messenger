@@ -16,9 +16,19 @@ login({email: config.user.email, password: config.user.password}, function(err, 
 	if (err) return console.error(err);
 	console.log('logged in successfully')
 	api = fbapi;
+	api.setOptions({
+		selfListen: true,
+		listenEvents: true,
+		// updatePresence: true,
+	})
 	currentUserID = api.getCurrentUserID();
 	loadThreads();
+	startListening();
 })
+
+function startListening() {
+	api.listen()
+}
 
 function getUser(uid, callback) {
 	api.getUserInfo(uid, function(err, obj) {
@@ -53,7 +63,7 @@ function addThreadDiv(arr, i) {
 	function add(thread_user, snippet_user) {
 		name = (currentUserID == thread.snippetSender) ? 'You' : snippet_user.firstName;
 		$('#threads').append(
-			'<div class="thread" onclick="setCurrentThread(' + thread.threadID + ')">' +
+			'<div class="thread" id="' + thread.threadID +'" onclick="setCurrentThread(' + thread.threadID + ')">' +
 				'<div class="thread-name">' +
 					thread_user.name + 
 				'</div><br />' +
@@ -93,12 +103,13 @@ function loadCurrentThread() {
 	}) 
 }
 
-
-
 function addMessageDiv(message) {
 	var isCurrentUser = (message.senderID.split(':')[1] == currentUserID);
 	$('#messages').append(
-		'<div class="message' + ((isCurrentUser) ? ' self' : '') + '">' +
+		'<div class="message' + 
+			((isCurrentUser) ? ' self' : '') +
+			((message.unsent) ? ' unsent' : '') +
+			(message.id ? '" id="' + message.id : '') + '">' + 
 			'<div class="sender">' +
 				((isCurrentUser) ? 'You' : message.threadName) +
 			'</div>' +
@@ -113,12 +124,29 @@ function addMessageDiv(message) {
 }
 
 function sendMessage(m) {
-	
+	// use UNIX timestamp as a unique identifier to refer to the message when it gets sent
+	ts = moment().format('x')
+	console.log(ts)
+	message = {
+		body: m,
+		senderID: 'fbid:' + currentUserID,
+		threadName: 'You',
+		unsent: true,
+		id: ts,
+	}
+	addMessageDiv(message);
+	scrollToBottom();
+	api.sendMessage({body: m}, currentThreadID, function(err) {
+		if (err) return console.error(err);
+		console.log(ts)
+		$('#' + ts).removeClass('unsent');
+	})
 }
 
 $('#message-input').on('keyup', function (e) {
     if (e.keyCode == 13) {
         sendMessage($(this).val())
+        $(this).val('')
     }
 });
 
