@@ -5,38 +5,17 @@
 	<link rel="stylesheet" type="text/css" href="default.css">
 </head>
 <body>
-	<div id="topbar"></div>
+	<div id="top-bar">
+		Messenger for Electron
+	</div>
 	<div id="container">
-		<div id="threads">
-			[login]
-		</div>
+		<div id="threads">Loading...</div>
 		<div id="conversation">
 			<div id="messages">
-				<div class="message">
-					<div class="sender">
-						Tuke Luthill
-					</div>
-					<div class="body">
-						Hello, world!
-					</div>
-<!-- 					<div class="timestamp">
-						Yesterday, 10:24 PM
-					</div> 
- -->				</div>
-				<div class="message self">
-					<div class="sender">
-						Luke Tuthill
-					</div>
-					<div class="body">
-						Hello, other world!
-					</div>
-<!-- 					<div class="timestamp">
-						Yesterday, 10:25 PM
-					</div> 
- -->				</div>
+				<div class="hint">Pick a thread from the right</div>
 			</div>
 			<div id="input">
-				<input type="text">
+				<input type="text" id="message-input">
 			</div>
 		</div>
 	</div>

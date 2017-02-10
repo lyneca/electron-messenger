@@ -17,8 +17,58 @@ login({email: config.user.email, password: config.user.password}, function(err, 
 	console.log('logged in successfully')
 	api = fbapi;
 	currentUserID = api.getCurrentUserID();
-	setCurrentThread(1074099266051901);
+	loadThreads();
 })
+
+function getUser(uid, callback) {
+	api.getUserInfo(uid, function(err, obj) {
+		if (err) return console.error(err);
+		for (var prop in obj) {
+			if (obj.hasOwnProperty(prop)) {
+				callback(obj[prop])
+			} 
+		}
+	})
+}
+
+function loadThreads() {
+	clearThreads();
+	api.getThreadList(0, 100, 'inbox', function(err, arr) {
+		if (err) return console.error(err);
+		// console.log(arr);
+		addThreadDiv(arr, 0);
+	});
+}
+
+function getThreadInfoUsers(threadID, snippetID, callback) {
+	api.getUserInfo([threadID, snippetID], function(err, obj) {
+		if (err) return console.error(err);
+		callback(obj[threadID], obj[snippetID])
+	})
+}
+
+function addThreadDiv(arr, i) {
+	if (i == arr.length) return;
+	var thread = arr[i]
+	function add(thread_user, snippet_user) {
+		name = (currentUserID == thread.snippetSender) ? 'You' : snippet_user.firstName;
+		$('#threads').append(
+			'<div class="thread" onclick="setCurrentThread(' + thread.threadID + ')">' +
+				'<div class="thread-name">' +
+					thread_user.name + 
+				'</div><br />' +
+				'<div class="last-message">' +
+					(thread.snippetHasAttachment ? name + ' sent an attachment' : name + ': ' + thread.snippet) + 
+				'</div><br />' +
+			'</div>' +
+			'<div class="divider"></div>'
+		)
+		addThreadDiv(arr, i + 1)
+	}
+	if (!thread.name) {
+		getThreadInfoUsers(thread.threadID, thread.snippetSender, add)
+	} else getUser(thread.snippetSender, function(user) {add({name: thread.name}, user)});
+}
 
 function loadCurrentThread() {
 	console.log('getting thread info')
@@ -62,6 +112,16 @@ function addMessageDiv(message) {
 	)
 }
 
+function sendMessage(m) {
+	
+}
+
+$('#message-input').on('keyup', function (e) {
+    if (e.keyCode == 13) {
+        sendMessage($(this).val())
+    }
+});
+
 function scrollToBottom() {
 	$('#messages').scrollTop($('#messages')[0].scrollHeight)
 }
@@ -69,6 +129,11 @@ function scrollToBottom() {
 function clearMessages() {
 	console.log('clearing messages')
 	$('#messages').empty()
+}
+
+function clearThreads() {
+	console.log('clearing threads')
+	$('#threads').empty()
 }
 
 function setCurrentThread(threadID) {
