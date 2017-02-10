@@ -1,16 +1,46 @@
 <!doctype html>
 <html>
 <head>
-	<link rel="stylesheet" href="default.css">
-	<script src="login.js"></script>
+	<!-- <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet"> -->
+	<link rel="stylesheet" type="text/css" href="default.css">
 </head>
 <body>
+	<div id="topbar"></div>
 	<div id="container">
-		<div id="threads"></div>
+		<div id="threads">
+			[login]
+		</div>
 		<div id="conversation">
-			<div id="messages"></div>
-			<div id="input"></div>
+			<div id="messages">
+				<div class="message">
+					<div class="sender">
+						Tuke Luthill
+					</div>
+					<div class="body">
+						Hello, world!
+					</div>
+<!-- 					<div class="timestamp">
+						Yesterday, 10:24 PM
+					</div> 
+ -->				</div>
+				<div class="message self">
+					<div class="sender">
+						Luke Tuthill
+					</div>
+					<div class="body">
+						Hello, other world!
+					</div>
+<!-- 					<div class="timestamp">
+						Yesterday, 10:25 PM
+					</div> 
+ -->				</div>
+			</div>
+			<div id="input">
+				<input type="text">
+			</div>
 		</div>
 	</div>
+	<script src="login.js"></script>
+	<script src="resize.js"></script>
 </body>
 </html>
