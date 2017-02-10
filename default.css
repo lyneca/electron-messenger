@@ -22,26 +22,27 @@ div {
 #threads {
 	width: 20%;
 	height: 100%;
+	margin: none;
 	vertical-align: top;
 }
 
 #conversation {
-	width: 75%;
+	width: calc(80% - 5px);
+	margin: none;
 	height: 100%;
 }
 
 #messages {
 	display: block;
 	overflow-y: scroll;
-	padding-left: 10px;
+	padding: 10px;
 	height: 600px;
-	width: calc(100% - 10px);
+	width: calc(100% - 20px);
 	background-color: #203354;
 }
 
 #input {
-	padding-top: 5px;
-	padding-bottom: 5px;
+	padding-top: 8px;
 	display: block;
 	height: 40px;
 }
@@ -49,7 +50,7 @@ div {
 #input input {
 	background-color: #203354;
 	padding: 10px;
-	width: calc(100% - 22px);
+	width: calc(100% - 21px);
 	height: calc(100% - 20px);
 	border: none;
 	color: #aaaaaa;
@@ -60,7 +61,7 @@ div {
 .message {
 	display: block;	
 	width: 100%;
-	margin-bottom: 10px;
+	margin-top: 10px;
 }
 
 .self, .self.timestamp, .self.sender {

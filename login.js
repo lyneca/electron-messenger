@@ -37,6 +37,7 @@ function loadCurrentThread() {
 				for (var i = 0; i < history.length; i++) {
 					addMessageDiv(history[i]);
 				}
+				scrollToBottom();
 			})
 		})
 	}) 
@@ -59,6 +60,10 @@ function addMessageDiv(message) {
 			// '</div>' + 
 		'</div>'
 	)
+}
+
+function scrollToBottom() {
+	$('#messages').scrollTop($('#messages')[0].scrollHeight)
 }
 
 function clearMessages() {
