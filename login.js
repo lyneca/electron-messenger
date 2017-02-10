@@ -27,15 +27,33 @@ login({email: config.user.email, password: config.user.password}, function(err, 
 })
 
 function startListening() {
-	api.listen()
+	api.listen(function(err, msg) {
+		if (err) return console.error(err);
+		var isSelf = (msg.senderID == currentUserID)
+		getUser(msg.senderID, function(err, sender) {
+			if (err) return console.error(err);
+			msg.sender = sender
+			msg.threadName = sender.name
+			switch (msg.type) {
+				case 'message':
+					name = (isSelf ? 'You' : sender.firstName )
+					$('#' + msg.threadID + '>last-message').val((msg.attacments.length > 0 ? name + ' sent an attachment' : name + ': ' + msg.body))
+					if (!isSelf && msg.threadID == currentThreadID) {
+						addMessageDiv(msg);
+						scrollToBottom();
+					}
+				break
+			} 
+		})
+	})
 }
 
 function getUser(uid, callback) {
 	api.getUserInfo(uid, function(err, obj) {
-		if (err) return console.error(err);
+		if (err) {return console.error(err)};
 		for (var prop in obj) {
 			if (obj.hasOwnProperty(prop)) {
-				callback(obj[prop])
+				callback(err, obj[prop])
 			} 
 		}
 	})
@@ -53,6 +71,7 @@ function loadThreads() {
 function getThreadInfoUsers(threadID, snippetID, callback) {
 	api.getUserInfo([threadID, snippetID], function(err, obj) {
 		if (err) return console.error(err);
+		console.log(obj)
 		callback(obj[threadID], obj[snippetID])
 	})
 }
@@ -60,6 +79,7 @@ function getThreadInfoUsers(threadID, snippetID, callback) {
 function addThreadDiv(arr, i) {
 	if (i == arr.length) return;
 	var thread = arr[i]
+	// console.log(thread)
 	function add(thread_user, snippet_user) {
 		name = (currentUserID == thread.snippetSender) ? 'You' : snippet_user.firstName;
 		$('#threads').append(
@@ -104,7 +124,7 @@ function loadCurrentThread() {
 }
 
 function addMessageDiv(message) {
-	var isCurrentUser = (message.senderID.split(':')[1] == currentUserID);
+	var isCurrentUser = ((message.senderID[0] == 'f' ? message.senderID.split(':')[1] : message.senderID) == currentUserID);
 	$('#messages').append(
 		'<div class="message' + 
 			((isCurrentUser) ? ' self' : '') +
@@ -126,7 +146,6 @@ function addMessageDiv(message) {
 function sendMessage(m) {
 	// use UNIX timestamp as a unique identifier to refer to the message when it gets sent
 	ts = moment().format('x')
-	console.log(ts)
 	message = {
 		body: m,
 		senderID: 'fbid:' + currentUserID,
@@ -138,7 +157,6 @@ function sendMessage(m) {
 	scrollToBottom();
 	api.sendMessage({body: m}, currentThreadID, function(err) {
 		if (err) return console.error(err);
-		console.log(ts)
 		$('#' + ts).removeClass('unsent');
 	})
 }
