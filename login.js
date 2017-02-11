@@ -4,6 +4,9 @@ var login = require('facebook-chat-api');
 var moment = require('moment')
 var $ = require('jquery')
 
+var app = require('electron').remote; 
+var dialog = app.dialog;
+
 var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
 var api;
 var currentThreadID;
@@ -26,6 +29,29 @@ login({email: config.user.email, password: config.user.password}, function(err, 
 	startListening();
 })
 
+function sendPhoto(caption) {
+	dialog.showOpenDialog(function(fileNames) {
+       	if (fileNames === undefined) {
+            console.log("No file selected");
+       	} else {
+       		files = []
+       		for (var i = 0; i < fileNames.length; i++) {
+	       		files.push(fs.createReadStream(fileNames[i]))
+       		}
+            api.sendMessage(
+            	{
+            		body: caption ? caption : '',
+            		attachment: files
+            	},
+            	currentThreadID,
+            	function(err, info) {
+            		if (err) console.error(err);
+            	}
+            );
+       	}
+	});
+}
+
 function startListening() {
 	api.listen(function(err, message) {
 		if (err) return console.error(err);
@@ -43,9 +69,6 @@ function startListening() {
 					}
 					$(selector + '>.last-message').text(message.attachments.length > 0 ? name + ' sent an attachment' : name + ': ' + message.body)
 					$(selector + ',' + selector + '+div').prependTo('#threads')
-					console.log('looking for #' + message.messageID.split(':')[1])
-					console.log('found ' + $('#' + message.messageID.split(':')[1]).length)
-					console.log($('#' + message.messageID.split(':')[1]))
 					if (!$('#' + message.messageID.split(':')[1]).length && message.threadID == currentThreadID) {
 						addMessageDiv(message);
 						scrollToBottom();
@@ -71,7 +94,6 @@ function loadThreads() {
 	clearThreads();
 	api.getThreadList(0, 100, 'inbox', function(err, arr) {
 		if (err) return console.error(err);
-		// console.log(arr);
 		addThreadDiv(arr, 0);
 	});
 }
@@ -90,10 +112,17 @@ function getUsers(users, callback) {
 	})
 }
 
+function findThread(text) {
+
+}
+
+function getThreadsThatMatch(text) {
+	
+}
+
 function addThreadDiv(arr, i) {
 	if (i == arr.length) return;
 	var thread = arr[i]
-	// console.log(thread)
 	function add(thread_user, snippet_user) {
 		name = (currentUserID == thread.snippetSender) ? 'You' : snippet_user.firstName;
 		$('#threads').append(
@@ -107,6 +136,7 @@ function addThreadDiv(arr, i) {
 			'</div>' +
 			'<div class="divider"></div>'
 		)
+		if (i + 1 >= arr.length) $('#top-bar').text(thread) // this isn't working
 		addThreadDiv(arr, i + 1)
 	}
 	if (!thread.name) {
@@ -115,7 +145,6 @@ function addThreadDiv(arr, i) {
 				names = [];
 				for (x in users) {
 					if (users.hasOwnProperty(x)) {
-						console.log(x)
 						names.push(users[x].firstName)
 					}
 				}
@@ -154,14 +183,31 @@ function loadCurrentThread() {
 function markThreadAsRead(threadID) {
 	api.markAsRead(threadID, function(err) {
 		if (err) return console.error(err)
-		console.log($('#' + threadID + ' *'))
 		$('#' + threadID + ' *').removeClass('unread');
 	});
 }
 
 function addMessageDiv(message) {
 	var isCurrentUser = ((message.senderID[0] == 'f' ? message.senderID.split(':')[1] : message.senderID) == currentUserID);
-	if (message.messageID) console.log(message.messageID.split(':')[1])
+	attachment_html = []
+	for (a in message.attachments) {
+		if (message.attachments.hasOwnProperty(a)) {
+			attachment = message.attachments[a]
+			switch (attachment.type) {
+				case 'sticker':
+					attachment_html.push(
+						'<img class="sticker" src="' + attachment.url + '">'
+					)
+				break
+				case 'photo':
+					attachment_html.push(
+						'<img class="photo" src="' + attachment.previewUrl + '">'
+					)
+				break
+			}
+		}
+	}
+
 	$('#messages').append(
 		'<div class="message' + 
 			((isCurrentUser) ? ' self' : '') +
@@ -173,6 +219,7 @@ function addMessageDiv(message) {
 			'<div class="body">' +
 				message.body + 
 			'</div>' +
+			attachment_html.join('') +
 			// '<div class="timestamp">' +
 			// 	moment(message.timestamp).calendar() +
 			// '</div>' + 
@@ -207,7 +254,9 @@ $('#message-input').on('keyup', function (e) {
 });
 
 function scrollToBottom() {
-	$('#messages').scrollTop($('#messages')[0].scrollHeight)
+	setTimeout(function() {
+		$('#messages').scrollTop($('#messages')[0].scrollHeight)
+	}, 300)
 }
 
 function clearMessages() {
