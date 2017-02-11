@@ -11,6 +11,7 @@ var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
 var api;
 var currentThreadID;
 var currentUserID;
+var searchBoxState = false;
 var idMappings = {};
 
 console.log('logging in')
@@ -45,7 +46,7 @@ function sendPhoto(caption) {
             	},
             	currentThreadID,
             	function(err, info) {
-            		if (err) console.error(err);
+            		if (err) return console.error(err);
             	}
             );
        	}
@@ -100,7 +101,7 @@ function loadThreads() {
 
 function getThreadInfoUsers(threadID, snippetID, callback) {
 	api.getUserInfo([threadID, snippetID], function(err, obj) {
-		if (err) console.error(err);
+		if (err) return console.error(err);
 		callback(obj[threadID], obj[snippetID])
 	})
 }
@@ -112,13 +113,47 @@ function getUsers(users, callback) {
 	})
 }
 
-function findThread(text) {
-
+function findUser(text) {
+	api.getUserID(text, function(err, obj) {
+		if (err) return console.error(err);
+		console.log(text, obj[0])
+		setCurrentThread(obj[0].userID);
+	});
 }
 
-function getThreadsThatMatch(text) {
-	
+$(document).keydown(function(e) {
+    if (e.keyCode == 78) {
+    	if (!searchBoxState && e.ctrlKey) {
+	    	openSearchBox();
+    	}
+    } else if (e.keyCode == 27) {
+    	if (searchBoxState) {
+    		closeSearchBox();
+		}
+	} else {
+		// console.log(e)
+	}
+});
+
+function openSearchBox() {
+	searchBoxState = true;
+	$('#search-box input').val('');
+	$('#search-box').css('opacity', 1);
+	$('#search-box input').focus();
 }
+
+function closeSearchBox() {
+	searchBoxState = false
+	$('#search-box').css('opacity', 0)
+	$('#message-input input').focus()
+}
+
+$('#search-box input').keydown(function(e) {
+	if (e.keyCode == 13) {
+		findUser($(this).val());	
+		closeSearchBox();		
+	}
+})
 
 function addThreadDiv(arr, i) {
 	if (i == arr.length) return;
@@ -175,6 +210,7 @@ function loadCurrentThread() {
 				}
 				scrollToBottom();
 				markThreadAsRead(currentThreadID)
+				$('#input input').focus();
 			})
 		})
 	})

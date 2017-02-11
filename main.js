@@ -16,8 +16,9 @@ function createWindow () {
     protocol: 'file:',
     slashes: true
   }))
-
-  win.setMenu(null)
+  
+  // Add a menu for debugging
+  // win.setMenu(null)
 
   // Open the DevTools.
   // win.webContents.openDevTools()

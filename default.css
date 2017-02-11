@@ -13,6 +13,18 @@ body {
 	font-family: Helvetica Neue, Segoe UI, Helvetica, Arial, sans-serif;
 }
 
+#search-box
+
+#search-box-input {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    outline: none;
+    border: none;
+    font-size: 25px;
+    color: #999999;	
+}
+
 div {
 
 }
@@ -106,6 +118,23 @@ div {
 	margin-top: 4px;
 	color: #1b2f50;
 	transition: color 0.3s ease 0s;
+}
+
+#search-box {
+	position: fixed;
+	background-color: #1b2f50;
+	box-shadow: ;
+	width: 250px;
+	height: 40px;
+	top: 20%;
+	left: 50%;
+	padding: 5px;
+	margin-left: -125px;
+	margin-top: -50px;
+	border-radius: 5px;
+	opacity: 0;
+	box-shadow: 0 3px 10px #222;
+	transition: opacity 0.3s ease 0s;	
 }
 
 #photo-icon:hover {
