@@ -143,6 +143,10 @@ div {
 	height: 20px;
 }
 
+.unread {
+	color: #dddddd;
+}
+
 .divider {
 	width: 100%;
 	height: 1px;

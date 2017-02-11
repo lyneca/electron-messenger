@@ -27,19 +27,27 @@ login({email: config.user.email, password: config.user.password}, function(err, 
 })
 
 function startListening() {
-	api.listen(function(err, msg) {
+	api.listen(function(err, message) {
 		if (err) return console.error(err);
-		var isSelf = (msg.senderID == currentUserID)
-		getUser(msg.senderID, function(err, sender) {
+		var isSelf = (message.senderID == currentUserID)
+		getUser(message.senderID, function(err, sender) {
 			if (err) return console.error(err);
-			msg.sender = sender
-			msg.threadName = sender.name
-			switch (msg.type) {
+			message.sender = sender
+			message.threadName = sender.name
+			switch (message.type) {
 				case 'message':
-					name = (isSelf ? 'You' : sender.firstName )
-					$('#' + msg.threadID + '>last-message').val((msg.attacments.length > 0 ? name + ' sent an attachment' : name + ': ' + msg.body))
-					if (!isSelf && msg.threadID == currentThreadID) {
-						addMessageDiv(msg);
+					var name = (isSelf ? 'You' : sender.firstName )
+					var selector = '#' + message.threadID
+					if (!(message.threadID == currentThreadID || isSelf)) {
+						$(selector + ' *').addClass('unread')
+					}
+					$(selector + '>.last-message').text(message.attachments.length > 0 ? name + ' sent an attachment' : name + ': ' + message.body)
+					$(selector + ',' + selector + '+div').prependTo('#threads')
+					console.log('looking for #' + message.messageID.split(':')[1])
+					console.log('found ' + $('#' + message.messageID.split(':')[1]).length)
+					console.log($('#' + message.messageID.split(':')[1]))
+					if (!$('#' + message.messageID.split(':')[1]).length && message.threadID == currentThreadID) {
+						addMessageDiv(message);
 						scrollToBottom();
 					}
 				break
@@ -70,9 +78,15 @@ function loadThreads() {
 
 function getThreadInfoUsers(threadID, snippetID, callback) {
 	api.getUserInfo([threadID, snippetID], function(err, obj) {
-		if (err) return console.error(err);
-		console.log(obj)
+		if (err) console.error(err);
 		callback(obj[threadID], obj[snippetID])
+	})
+}
+
+function getUsers(users, callback) {
+	api.getUserInfo(users, function(err, obj) {
+		if (err) return console.error(err);
+		callback(err, obj)
 	})
 }
 
@@ -83,11 +97,11 @@ function addThreadDiv(arr, i) {
 	function add(thread_user, snippet_user) {
 		name = (currentUserID == thread.snippetSender) ? 'You' : snippet_user.firstName;
 		$('#threads').append(
-			'<div class="thread" id="' + thread.threadID +'" onclick="setCurrentThread(' + thread.threadID + ')">' +
-				'<div class="thread-name">' +
+			'<div class="thread' + (thread.unreadCount ? ' unread' : '') + '" id="' + thread.threadID +'" onclick="setCurrentThread(' + thread.threadID + ')">' +
+				'<div class="thread-name' + (thread.unreadCount ? ' unread' : '') + '">' +
 					thread_user.name + 
 				'</div><br />' +
-				'<div class="last-message">' +
+				'<div class="last-message' + (thread.unreadCount ? ' unread' : '') + '">' +
 					(thread.snippetHasAttachment ? name + ' sent an attachment' : name + ': ' + thread.snippet) + 
 				'</div><br />' +
 			'</div>' +
@@ -96,8 +110,21 @@ function addThreadDiv(arr, i) {
 		addThreadDiv(arr, i + 1)
 	}
 	if (!thread.name) {
-		getThreadInfoUsers(thread.threadID, thread.snippetSender, add)
-	} else getUser(thread.snippetSender, function(user) {add({name: thread.name}, user)});
+		if (thread.participants.length > 2) {
+			getUsers(thread.participantIDs, function(err, users) {
+				names = [];
+				for (x in users) {
+					if (users.hasOwnProperty(x)) {
+						console.log(x)
+						names.push(users[x].firstName)
+					}
+				}
+				add({name: names.join(', ')}, users[thread.snippetSender])
+			});
+		} else {
+			getThreadInfoUsers(thread.threadID, thread.snippetSender, add)
+		}
+	} else getUser(thread.snippetSender, function(err, user) {add({name: thread.name}, user)});
 }
 
 function loadCurrentThread() {
@@ -118,18 +145,28 @@ function loadCurrentThread() {
 					addMessageDiv(history[i]);
 				}
 				scrollToBottom();
+				markThreadAsRead(currentThreadID)
 			})
 		})
-	}) 
+	})
+}
+
+function markThreadAsRead(threadID) {
+	api.markAsRead(threadID, function(err) {
+		if (err) return console.error(err)
+		console.log($('#' + threadID + ' *'))
+		$('#' + threadID + ' *').removeClass('unread');
+	});
 }
 
 function addMessageDiv(message) {
 	var isCurrentUser = ((message.senderID[0] == 'f' ? message.senderID.split(':')[1] : message.senderID) == currentUserID);
+	if (message.messageID) console.log(message.messageID.split(':')[1])
 	$('#messages').append(
 		'<div class="message' + 
 			((isCurrentUser) ? ' self' : '') +
-			((message.unsent) ? ' unsent' : '') +
-			(message.id ? '" id="' + message.id : '') + '">' + 
+			((message.unsent) ? ' unsent' : '') + '" ' + 
+			(message.messageID ? 'id="' + message.messageID.split(':')[1] : 'id="' + message.id ) + '">' + 
 			'<div class="sender">' +
 				((isCurrentUser) ? 'You' : message.threadName) +
 			'</div>' +
@@ -155,9 +192,10 @@ function sendMessage(m) {
 	}
 	addMessageDiv(message);
 	scrollToBottom();
-	api.sendMessage({body: m}, currentThreadID, function(err) {
+	api.sendMessage({body: m}, currentThreadID, function(err, info) {
 		if (err) return console.error(err);
 		$('#' + ts).removeClass('unsent');
+		$('#' + ts).attr('id', info.messageID.split(':')[1]);
 	})
 }
 
